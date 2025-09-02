@@ -1,0 +1,8 @@
+com\app\debate\api\DebateController$SparRequest$Turn.class
+com\app\debate\config\WebCorsConfig.class
+com\app\debate\api\DebateController$SparRequest.class
+com\app\debate\api\DebateController.class
+com\app\debate\config\WebCorsConfig$1.class
+com\app\debate\core\DebateService.class
+com\app\debate\core\SimpleSummarizer.class
+com\app\debate\DebateAssistantApplication.class

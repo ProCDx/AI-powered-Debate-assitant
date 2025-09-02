@@ -1,0 +1,504 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>AI Debate Assistant</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    :root {
+      --bg: #0d1117; --fg: #cdd9e5; --muted:#97a6b4;
+      --card:#111826; --border:#1f2937; --accent:#61dafb; --ok:#22c55e; --warn:#f59e0b;
+      --chip:#1e293b; --link:#7dd3fc;
+    }
+    [data-theme="light"]{
+      --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --accent:#2563eb; --ok:#16a34a; --warn:#d97706;
+      --chip:#e2e8f0; --link:#1d4ed8;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);z-index:5}
+    .bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px}
+    h1{font-size:22px;margin:0 8px 0 0}
+    select,input,button,textarea{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    select, input{height:42px}
+    button{cursor:pointer}
+    .primary{background:linear-gradient(90deg,#1f6feb,#3ea6ff);border:none;color:#fff;font-weight:600}
+    .ghost{background:transparent;border:1px solid var(--border)}
+    .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);font-size:12px}
+    .muted{color:var(--muted)}
+    main{max-width:1100px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:1fr 340px;gap:16px}
+    .full{grid-column:1 / -1}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .section h2{margin:0 0 12px}
+    ul{margin:8px 0 0 22px}
+    a{color:var(--link)}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--chip);margin-right:6px}
+    .right{justify-content:flex-end}
+    .tabs{display:flex;gap:8px;margin-left:auto}
+    .tabs button{padding:8px 12px;border-radius:999px}
+    .activeTab{background:var(--accent);color:#fff;border:none}
+    textarea{width:100%;min-height:120px}
+    .timeline-item{border-top:1px dashed var(--border);padding:10px 0}
+  </style>
+</head>
+<body data-theme="dark">
+<header>
+  <div class="bar">
+    <h1>🎤 AI Debate Assistant</h1>
+    <span id="status" class="chip muted">Loading topics…</span>
+
+    <div class="tabs">
+      <button id="tab-pack" class="activeTab">Pack</button>
+      <button id="tab-spar">Solo Sparring (Beta)</button>
+      <button id="themeBtn" class="ghost">🌙/☀️</button>
+    </div>
+  </div>
+
+  <div class="bar" id="toolbar">
+    <select id="topicSel"></select>
+    <input id="customTopic" placeholder="Or type your own topic…" style="min-width:280px"/>
+    <select id="stance">
+      <option value="pro">I support (PRO)</option>
+      <option value="con">I oppose (CON)</option>
+    </select>
+    <button id="go" class="primary">Generate</button>
+    <button id="reload" class="ghost">Reload topics</button>
+
+    <!-- Timer (lightweight) -->
+    <select id="timerSel" class="ghost">
+      <option value="120">2:00</option>
+      <option value="180" selected>3:00</option>
+      <option value="240">4:00</option>
+      <option value="300">5:00</option>
+    </select>
+    <button id="timerStart" class="ghost">▶</button>
+    <button id="timerPause" class="ghost">⏸</button>
+    <button id="timerReset" class="ghost">⟲</button>
+    <span class="chip" id="timerView">03:00</span>
+    <label class="row"><input type="checkbox" id="chime"/> 🔔 chime</label>
+  </div>
+</header>
+
+<main>
+  <!-- =========================== PACK =================================== -->
+  <section id="packSection" class="full">
+    <div class="card section">
+      <h2 id="packTitle">—</h2>
+      <p id="packSummary" class="muted">Generate to see content.</p>
+      <div class="row right">
+        <button id="shareBtn" class="ghost">Share link</button>
+        <button id="printBtn" class="ghost">Print / PDF</button>
+        <button id="mdBtn" class="ghost">Download .md</button>
+        <button id="copyBtn" class="ghost">Copy pack</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Your Arguments</h3>
+      <ul id="packArgs"></ul>
+      <div class="row right"><button id="copyArgs" class="ghost">Copy</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Counter-Arguments to Prepare For</h3>
+      <ul id="packCons"></ul>
+    </div>
+
+    <div class="card">
+      <h3>Quick Facts</h3>
+      <ul id="packFacts"></ul>
+    </div>
+
+    <div class="card">
+      <h3>References</h3>
+      <div id="packRefs"></div>
+    </div>
+  </section>
+
+  <!-- ====================== SOLO SPARRING (BETA) ======================== -->
+  <section id="sparSection" class="full" style="display:none">
+    <div class="card">
+      <div class="row">
+        <strong>Solo Sparring</strong>
+        <span id="sparStatus" class="chip muted">Pick topic & stance, then start.</span>
+        <span class="chip muted">Mode:</span>
+        <select id="sparMode">
+          <option value="free">Free rebuttal</option>
+          <option value="cwi">C/W/I structured</option>
+        </select>
+        <span class="chip muted">Difficulty:</span>
+        <select id="sparDiff">
+          <option value="basic">Basic</option>
+          <option value="advanced">Advanced</option>
+        </select>
+        <button id="sparExport" class="ghost" style="margin-left:auto">Export (.md)</button>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div class="pill">Opening suggestions:</div>
+        <div id="openings"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="sparEditorsFree">
+        <h3>Your turn</h3>
+        <textarea id="sparUserText" placeholder="Write your argument or rebuttal…"></textarea>
+      </div>
+
+      <div id="sparEditorsCwi" style="display:none">
+        <h3>Your turn (C/W/I)</h3>
+        <div class="row">
+          <input id="c_claim" placeholder="Claim" style="flex:1"/>
+          <input id="c_warrant" placeholder="Warrant" style="flex:1"/>
+          <input id="c_impact" placeholder="Impact" style="flex:1"/>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="sparGo" class="primary">Generate counter</button>
+        <button id="sparRe" class="ghost">Regenerate</button>
+        <button id="sparSteel" class="ghost">Stealman me first</button>
+        <button id="sparSwitch" class="ghost">Switch sides</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Opponent (bot)</h3>
+      <div id="sparBot" class="muted">—</div>
+      <div id="sparHint" class="muted" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Timeline</h3>
+      <div id="sparTimeline"></div>
+    </div>
+  </section>
+
+  <!-- right sidebar: history -->
+  <aside class="card">
+    <h3>History</h3>
+    <div id="history"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="clearHistory" class="ghost">Clear history</button>
+      <button id="restoreLast" class="ghost">Restore last pack</button>
+    </div>
+  </aside>
+</main>
+
+<script>
+/* ------------------ helpers ------------------ */
+const $  = (id)=>document.getElementById(id);
+const qs = (sel)=>document.querySelector(sel);
+
+/* API base:
+   - If ?api=… is provided, use it
+   - If running on Live Server (5500) and no api param, add ?api=http://localhost:8080/api automatically
+*/
+const API_BASE = (() => {
+  const sp = new URLSearchParams(location.search);
+  let base = sp.get('api');
+
+  // Auto-add when on Live Server and not provided
+  if (!base && location.port === '5500') {
+    const url = new URL(location.href);
+    url.searchParams.set('api','http://localhost:8080/api');
+    history.replaceState(null,'',url.toString());
+    base = 'http://localhost:8080/api';
+  }
+
+  // Default when served by Spring Boot itself
+  if (!base) base = '/api';
+
+  return base.replace(/\/$/,''); // no trailing slash
+})();
+const apiUrl = (path) => `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+
+/* ------------------------- THEME -------------------------- */
+$('themeBtn').onclick = ()=>{
+  const curr = document.body.getAttribute('data-theme');
+  const next = curr === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+};
+(() => {
+  const t = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', t);
+})();
+
+/* ------------------------- TABS --------------------------- */
+$('tab-pack').onclick = ()=>{
+  $('tab-pack').classList.add('activeTab');
+  $('tab-spar').classList.remove('activeTab');
+  $('packSection').style.display='';
+  $('sparSection').style.display='none';
+};
+$('tab-spar').onclick = ()=>{
+  $('tab-spar').classList.add('activeTab');
+  $('tab-pack').classList.remove('activeTab');
+  $('packSection').style.display='none';
+  $('sparSection').style.display='';
+};
+
+/* ----------------------- TIMER ---------------------------- */
+let left = 180, tId=null;
+function draw(){ $('timerView').textContent = new Date(left*1000).toISOString().substring(14,19); }
+function beep(){
+  if(!$('chime').checked) return;
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type='sine'; osc.frequency.value=880;
+    osc.connect(gain); gain.connect(ctx.destination);
+    gain.gain.value = 0.2;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+    osc.stop(ctx.currentTime + 0.15);
+  }catch(e){}
+}
+$('timerSel').onchange = ()=>{ left = parseInt($('timerSel').value,10); draw(); };
+$('timerStart').onclick = ()=>{
+  if(tId) return;
+  tId = setInterval(()=>{
+    left=Math.max(0,left-1); draw();
+    if(left===60||left===30) beep();
+    if(left===0){ beep(); clearInterval(tId); tId=null; }
+  },1000);
+};
+$('timerPause').onclick = ()=>{ clearInterval(tId); tId=null; };
+$('timerReset').onclick = ()=>{ left = parseInt($('timerSel').value,10); draw(); };
+draw();
+
+/* --------------------- TOPICS & PACK ---------------------- */
+const defaultTopics = ["Universal Basic Income","Social Media Age Verification","Will AI take away jobs of humans"];
+function fillTopics(list){
+  const sel=$('topicSel');
+  sel.innerHTML = ['<option disabled selected>— choose a topic —</option>']
+      .concat((list||[]).map(t=>`<option>${t}</option>`)).join('');
+}
+async function loadTopics(){
+  $('status').textContent='Loading topics…';
+  try{
+    const r = await fetch(apiUrl('/debate/topics'));
+    const j = r.ok ? await r.json() : defaultTopics;
+    fillTopics(j.length ? j : defaultTopics);
+    $('status').textContent='Topics loaded.';
+  }catch(e){
+    console.warn(e); fillTopics(defaultTopics);
+    $('status').textContent='Using fallback topics.';
+  }
+}
+loadTopics();
+
+function topicSelected(){
+  const typed = $('customTopic').value.trim();
+  const s = $('topicSel');
+  return typed || (s.value && s.value !== "" ? s.value : "");
+}
+
+async function doGenerate(){
+  const topic = topicSelected(); if(!topic) return alert('Pick or type a topic.');
+  const stance = $('stance').value;
+  const r = await fetch(apiUrl(`/debate/generate?topic=${encodeURIComponent(topic)}&stance=${encodeURIComponent(stance)}`));
+  if(!r.ok) { $('packSummary').textContent = `Request failed (${r.status}).`; return; }
+  const d = await r.json();
+
+  $('packTitle').textContent = `${d.topic} — ${d.stance}`;
+  $('packSummary').textContent = d.summary;
+
+  $('packArgs').innerHTML = (d.arguments||[]).map(x=>`<li>${x}</li>`).join('');
+  $('packCons').innerHTML = (d.counter_arguments||[]).map(x=>`<li>${x}</li>`).join('');
+  $('packFacts').innerHTML = (d.facts||[]).map(x=>`<li>${x}</li>`).join('');
+  $('packRefs').innerHTML = (d.references||[]).map(x=>`<div><a href="${x}" target="_blank">${x}</a></div>`).join('');
+
+  // openings for sparring (simple)
+  $('openings').innerHTML = (d.arguments||[]).slice(0,4)
+    .map(a=>`<button class="pill ghost openingBtn">${a}</button>`).join('');
+  [...document.querySelectorAll('.openingBtn')].forEach(btn=>{
+    btn.onclick = ()=>{
+      if ($('sparMode').value==='cwi') $('c_claim').value = btn.textContent;
+      else $('sparUserText').value = btn.textContent;
+    };
+  });
+
+  // history
+  const h = JSON.parse(localStorage.getItem('history')||'[]');
+  h.unshift({ topic:d.topic, stance:d.stance, when:new Date().toISOString() });
+  localStorage.setItem('history', JSON.stringify(h.slice(0,12)));
+  renderHistory();
+}
+$('go').onclick = doGenerate;
+$('reload').onclick = loadTopics;
+
+function renderHistory(){
+  const h = JSON.parse(localStorage.getItem('history')||'[]');
+  $('history').innerHTML = h.length ? h.map(x=>`
+    <div class="timeline-item">
+      <div><strong>${x.topic}</strong> <span class="muted">(${x.stance})</span></div>
+      <div class="muted">${new Date(x.when).toLocaleString()}</div>
+    </div>
+  `).join('') : '<div class="muted">No history yet.</div>';
+}
+$('clearHistory').onclick = ()=>{ localStorage.removeItem('history'); renderHistory(); };
+$('restoreLast').onclick = ()=>{
+  const h = JSON.parse(localStorage.getItem('history')||'[]');
+  if(!h.length) return;
+  $('customTopic').value = h[0].topic;
+  $('stance').value = (h[0].stance||'PRO').toLowerCase();
+  doGenerate();
+};
+renderHistory();
+
+/* ------------------------- SHARE / EXPORT ----------------- */
+$('shareBtn').onclick = async ()=>{
+  const url = new URL(location.href);
+  url.searchParams.set('topic', topicSelected());
+  url.searchParams.set('stance', $('stance').value);
+  url.searchParams.set('api', API_BASE); // keep current API base
+  await navigator.clipboard.writeText(url.toString());
+  $('status').textContent = 'Shareable link copied!';
+};
+$('printBtn').onclick = ()=>window.print();
+$('mdBtn').onclick = ()=>{
+  const md = collectPackAsMarkdown();
+  const blob = new Blob([md],{type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'debate-pack.md';
+  a.click();
+};
+$('copyBtn').onclick = async ()=>{ await navigator.clipboard.writeText(collectPackAsMarkdown()); $('status').textContent='Copied pack!'; };
+$('copyArgs').onclick = async ()=>{
+  const list = [...document.querySelectorAll('#packArgs li')].map(li=>`- ${li.textContent}`).join('\n');
+  await navigator.clipboard.writeText(list); $('status').textContent='Arguments copied!';
+};
+function collectPackAsMarkdown(){
+  return `# ${$('packTitle').textContent}
+${$('packSummary').textContent}
+
+## Your Arguments
+${[...document.querySelectorAll('#packArgs li')].map(li=>`- ${li.textContent}`).join('\n')}
+
+## Counters to Prepare For
+${[...document.querySelectorAll('#packCons li')].map(li=>`- ${li.textContent}`).join('\n')}
+
+## Quick Facts
+${[...document.querySelectorAll('#packFacts li')].map(li=>`- ${li.textContent}`).join('\n')}
+
+## References
+${[...document.querySelectorAll('#packRefs a')].map(a=>`- ${a.href}`).join('\n')}
+`;
+}
+
+/* ======================= SOLO SPARRING ==================== */
+$('sparMode').onchange = ()=>{
+  const m = $('sparMode').value;
+  $('sparEditorsFree').style.display = m==='free' ? '' : 'none';
+  $('sparEditorsCwi').style.display = m==='cwi' ? '' : 'none';
+};
+
+// findLast fallback (for older browsers)
+function findLast(arr, pred){
+  for (let i=arr.length-1;i>=0;i--) if (pred(arr[i],i,arr)) return arr[i];
+  return undefined;
+}
+
+let sparTurns = []; 
+function renderSparTimeline(){
+  $('sparTimeline').innerHTML = sparTurns.length
+    ? sparTurns.map((t,i)=>`
+       <div class="timeline-item">
+         <div class="muted">Turn ${i+1} — ${t.speaker==='you' ? 'You' : 'Bot'}</div>
+         ${t.cwi ? `
+           <div><strong>Claim:</strong> ${t.cwi.claim||''}</div>
+           <div><strong>Warrant:</strong> ${t.cwi.warrant||''}</div>
+           <div><strong>Impact:</strong> ${t.cwi.impact||''}</div>
+         ` : `<div>${t.text}</div>`}
+       </div>
+     `).join('')
+    : '<div class="muted">No turns yet.</div>';
+}
+
+async function sparCall(request){
+  const r = await fetch(apiUrl('/spar/counter'),{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(request)
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+function currentSide(){ return $('stance').value; }
+
+$('sparGo').onclick = async ()=>{
+  const topic = topicSelected(); if(!topic) return alert('Pick a topic first.');
+  const side = currentSide();
+  const mode = $('sparMode').value;
+  const diff = $('sparDiff').value;
+
+  let userTurn = { text:'', cwi:null };
+  if (mode==='free') {
+    const txt = $('sparUserText').value.trim();
+    if(!txt) return alert('Write your turn first.');
+    userTurn.text = txt;
+    sparTurns.push({speaker:'you', text:txt});
+  } else {
+    const c = $('c_claim').value.trim(), w=$('c_warrant').value.trim(), i=$('c_impact').value.trim();
+    if(!c && !w && !i) return alert('Fill Claim / Warrant / Impact.');
+    userTurn.cwi = { claim:c, warrant:w, impact:i };
+    sparTurns.push({speaker:'you', cwi:userTurn.cwi});
+  }
+  renderSparTimeline();
+  $('sparStatus').textContent = 'Thinking…';
+
+  try{
+    const req = { topic, side, mode, difficulty:diff, userTurn, history: sparTurns.slice(-6) };
+    const resp = await sparCall(req);
+    const counter = resp.counter||{};
+    $('sparBot').textContent = counter.text || '—';
+    $('sparHint').textContent = resp.hint || '';
+    sparTurns.push({speaker:'bot', text:counter.text, cwi: counter.cwi});
+    renderSparTimeline();
+    $('sparStatus').textContent = 'Counter generated.';
+  }catch(e){
+    console.error(e);
+    $('sparStatus').textContent = 'API unavailable — using fallback.';
+    const opp = side==='pro' ? 'con' : 'pro';
+    const txt = mode==='free'
+      ? `Counter (${opp}): Even if benefits exist, ${topic} carries significant trade-offs.`
+      : `Counter (${opp}) — Claim: risks outweigh benefits; Warrant: evidence is mixed; Impact: net harm likely.`;
+    $('sparBot').textContent = txt;
+    sparTurns.push({speaker:'bot', text:txt});
+    renderSparTimeline();
+  }
+};
+
+$('sparRe').onclick = ()=>{ if (sparTurns.length) $('sparGo').click(); };
+$('sparSteel').onclick = ()=>{
+  const last = (Array.prototype.findLast ? sparTurns.findLast(t=>t.speaker==='you') : findLast(sparTurns,t=>t.speaker==='you'));
+  if(!last){ alert('Write your turn first.'); return; }
+  $('sparBot').textContent = "Steelman: A stronger version of your point would bound conditions, add evidence, and compare impacts.";
+};
+$('sparSwitch').onclick = ()=>{
+  $('stance').value = $('stance').value==='pro' ? 'con' : 'pro';
+  $('sparStatus').textContent = 'Side switched. Now write the next turn.';
+};
+
+$('sparExport').onclick = ()=>{
+  const md = `# Solo Sparring — ${topicSelected()} (${currentSide().toUpperCase()})\n\n` +
+    sparTurns.map((t,i)=>`## Turn ${i+1} — ${t.speaker==='you'?'You':'Bot'}\n` +
+      (t.cwi ? `- **Claim**: ${t.cwi.claim||''}\n- **Warrant**: ${t.cwi.warrant||''}\n- **Impact**: ${t.cwi.impact||''}\n`
+              : t.text || '')).join('\n');
+  const blob = new Blob([md],{type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'spar-session.md';
+  a.click();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+[
+  {
+    "topic": "Universal Basic Income",
+    "overview": "Universal Basic Income (UBI) gives all citizens a regular, unconditional sum. Supporters say it simplifies welfare and cushions automation shocks; critics worry about fiscal cost, inflation, and labor supply effects.",
+    "pro": [
+      "Provides a floor against poverty and income shocks.",
+      "Simplifies welfare administration and reduces leakage.",
+      "Supports entrepreneurship and risk-taking.",
+      "Helps transition during automation-driven job losses.",
+      "Reduces stigma associated with targeted benefits."
+    ],
+    "con": [
+      "High fiscal burden may force tax hikes or cuts elsewhere.",
+      "May reduce labor participation at the margin.",
+      "Could raise prices for essentials like rent.",
+      "Uniform payout ignores regional cost-of-living differences.",
+      "Opportunity cost versus healthcare or education spending."
+    ],
+    "facts": [
+      "Pilots have run in Finland, Canada, Kenya, and India.",
+      "Cash transfers often improve nutrition and school attendance.",
+      "Funding options include VAT, carbon tax, or dividends."
+    ],
+    "references": [
+      "https://en.wikipedia.org/wiki/Universal_basic_income",
+      "https://ourworldindata.org/income-inequality",
+      "https://www.imf.org"
+    ]
+  },
+  {
+    "topic": "Social Media Age Verification",
+    "overview": "Mandatory age checks aim to protect minors from harms like grooming or addictive design. Methods include ID, bank checks, or AI face estimation; privacy, security, and exclusion risks are key concerns.",
+    "pro": [
+      "Better protection of minors from explicit content.",
+      "Improves accountability and reporting mechanisms.",
+      "Enables minor-specific safer design defaults."
+    ],
+    "con": [
+      "Large-scale privacy and surveillance risks.",
+      "Creates attack surface for identity theft.",
+      "Excludes users without IDs and harms anonymity."
+    ],
+    "facts": [
+      "Some providers test biometric age estimation via webcam.",
+      "Data retention policies vary widely by region and platform.",
+      "Parental consent frameworks exist in several jurisdictions."
+    ],
+    "references": [
+      "https://en.wikipedia.org/wiki/Age_verification",
+      "https://www.eff.org"
+    ]
+  },
+  {
+  "topic": "Will AI take away jobs of humans",
+  "overview": "Debate centers on whether AI-driven automation will permanently displace large portions of the workforce or mostly reshape tasks, creating new roles while eliminating some routine ones.",
+  "pro": [
+    "History shows routine and clerical roles shrink when automation arrives; AI expands what can be automated beyond physical tasks.",
+    "Generative AI reduces demand for entry-level content, support, and basic coding, concentrating work into fewer, higher-skill roles.",
+    "Firms that adopt AI can produce the same output with fewer workers, creating a net displacement in the short to medium term.",
+    "Re-skilling lags behind technology adoption; displaced workers may not transition quickly enough.",
+    "AI substitutes for cognitive tasks once thought safe, widening the set of at-risk jobs."
+  ],
+  "con": [
+    "Technology has historically been a net job creator; new roles (prompt engineering, AI ops, data governance) emerge.",
+    "AI mostly automates tasks, not whole jobs; productivity gains translate into new products and services that need people.",
+    "Human skills—empathy, complex coordination, accountability—remain scarce and complementary to AI.",
+    "Policy levers (training subsidies, wage insurance, transition support) can offset displacement.",
+    "Lower costs can boost demand and employment in adjacent sectors."
+  ],
+  "facts": [
+    "Automation first targets routine, repetitive tasks—both manual and cognitive.",
+    "Short-run displacement can coexist with long-run job creation.",
+    "Impact varies by industry, education, and local adoption rates."
+  ],
+  "references": [
+    "https://en.wikipedia.org/wiki/Technological_unemployment",
+    "https://ourworldindata.org/technology-and-employment"
+  ]
+}
+]

@@ -1,0 +1,12 @@
+{
+  "java.configuration.updateBuildConfiguration": "interactive",
+
+  // Serve from src/main/resources/static so the site is at /index.html
+  "liveServer.settings.root": "/src/main/resources/static",
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.host": "127.0.0.1",
+
+  // Launch Chrome with the API query param appended
+  "liveServer.settings.CustomBrowser": "chrome",
+  "liveServer.settings.AdvanceCustomBrowserCmdLine": "chrome --new-window http://127.0.0.1:5500/index.html?api=http://localhost:8080/api"
+}
